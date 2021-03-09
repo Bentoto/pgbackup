@@ -1,4 +1,4 @@
-from argparse import Action ,ArgumentParser
+from argparse import Action, ArgumentParser
 
 
 class DriverAction(Action):
@@ -18,5 +18,20 @@ def create_parser():
             nargs=2,
             action=DriverAction,
             required=True)
-    
     return parser
+
+
+def main():
+    import boto3
+    import pgdumps
+    import storage
+
+    args = create_parser().parse_args()
+    dump = pgdumps.dump(args.url)
+    if args.driver == 's3':
+        client = boto3.client('s3')
+        storage.upload_to_s3(client, dump.stdout, args.destination,
+        'example.sql')
+    else:
+        outfile = open(args.destination, 'wb')
+        storage.local(dump.stdout, outfile)
